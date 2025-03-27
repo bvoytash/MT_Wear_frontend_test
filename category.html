@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Categories API Tester</title>
   <link rel="stylesheet" href="styles.css"> <!-- Use the same CSS file as for products -->
 </head>
+
 <body>
   <header>
     <h1>Categories API Tester</h1>
@@ -51,11 +53,13 @@
       <form id="updateCategoryForm">
         <div class="form-group">
           <label for="update_category_id">Category ID:</label>
-          <input type="number" id="update_category_id" name="update_category_id" required placeholder="Enter category ID to update">
+          <input type="number" id="update_category_id" name="update_category_id" required
+            placeholder="Enter category ID to update">
         </div>
         <div class="form-group">
           <label for="update_category_name">New Category Name:</label>
-          <input type="text" id="update_category_name" name="update_category_name" required placeholder="Enter new category name">
+          <input type="text" id="update_category_name" name="update_category_name" required
+            placeholder="Enter new category name">
         </div>
         <button class="big-button" type="button" onclick="updateCategory()">Update Category</button>
       </form>
@@ -68,7 +72,8 @@
       <form id="deleteCategoryForm">
         <div class="form-group">
           <label for="delete_category_id">Category ID:</label>
-          <input type="number" id="delete_category_id" name="delete_category_id" required placeholder="Enter category ID to delete">
+          <input type="number" id="delete_category_id" name="delete_category_id" required
+            placeholder="Enter category ID to delete">
         </div>
         <button class="big-button delete-button" type="button" onclick="deleteCategory()">Delete Category</button>
       </form>
@@ -80,32 +85,34 @@
   <!-- JavaScript -->
   <!-- Embedded JavaScript for interacting with the API -->
   <script>
-    const apiBaseUrl = "http://localhost:8000/categories"; // Replace with your FastAPI server URL
+    const apiBaseUrl = "http://127.0.0.1:8000/categories"; // Replace with your FastAPI server URL
 
     // Function to get CSRF token from cookies
     function getCookie(name) {
-        const nameEQ = name + "=";
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            let cookie = cookies[i].trim();
-            if (cookie.indexOf(nameEQ) === 0) {
-                return decodeURIComponent(cookie.substring(nameEQ.length));
-            }
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+          return decodeURIComponent(cookie.substring(nameEQ.length));
         }
-        return null;
+      }
+      return null;
     }
-
-    const csrfToken = getCookie('csrf_token');
 
     // Create Category
     async function createCategory() {
       const categoryName = document.getElementById("category_name").value;
+      const csrfToken = getCookie('csrf_token');
+      const formData = new FormData();
+      formData.append("name", categoryName);
 
       try {
         const response = await fetch(`${apiBaseUrl}/create`, {
           method: "POST",
-          headers: {'X-CSRF-Token': csrfToken },
-          body: JSON.stringify({ name: categoryName }),
+          headers: { 'X-CSRF-Token': csrfToken },
+          body: formData,
+          credentials: "include"
         });
 
         const result = await response.json();
@@ -118,14 +125,19 @@
 
     // Get All Categories
     async function getAllCategories() {
+      const csrfToken = getCookie('csrf_token');
       try {
         const response = await fetch(`${apiBaseUrl}/all`, {
-          headers: { "X-CSRF-Token": csrfToken }
+          headers: { "X-CSRF-Token": csrfToken },
+          credentials: "include"
         });
         const data = await response.json();
-
         const categoriesList = document.getElementById("categories-list");
-        categoriesList.innerText = JSON.stringify(data.categories, null, 2);
+        if (data.categories) {
+          categoriesList.innerText = JSON.stringify(data.categories, null, 2);
+        } else {
+          categoriesList.innerText = data.detail;
+        }
       } catch (error) {
         console.error(error);
         alert("Failed to fetch categories");
@@ -135,15 +147,21 @@
     // Get Category by ID
     async function getCategoryById() {
       const categoryId = document.getElementById("category_id").value;
+      const csrfToken = getCookie('csrf_token');
 
       try {
         const response = await fetch(`${apiBaseUrl}/${categoryId}`, {
-          headers: { "X-CSRF-Token": csrfToken }
+          headers: { "X-CSRF-Token": csrfToken },
+          credentials: "include"
         });
         const data = await response.json();
-
         const categoryDetails = document.getElementById("category-details");
-        categoryDetails.innerText = JSON.stringify(data.category, null, 2);
+
+        if (data.category) {
+          categoryDetails.innerText = JSON.stringify(data.category, null, 2);
+        } else {
+          categoryDetails.innerText = data.detail;
+        }
       } catch (error) {
         console.error(error);
         alert(`Failed to fetch category with ID ${categoryId}`);
@@ -154,15 +172,19 @@
     async function updateCategory() {
       const categoryId = document.getElementById("update_category_id").value;
       const newName = document.getElementById("update_category_name").value;
+      const csrfToken = getCookie('csrf_token');
+
+      const formData = new FormData();
+      formData.append("name", newName);
 
       try {
         const response = await fetch(`${apiBaseUrl}/${categoryId}`, {
           method: "PUT",
-          headers: { 
-            "Content-Type": "application/json", 
-            "X-CSRF-Token": csrfToken 
+          headers: {
+            "X-CSRF-Token": csrfToken,
           },
-          body: JSON.stringify({ name: newName }),
+          credentials: "include",
+          body: formData,
         });
 
         const result = await response.json();
@@ -176,11 +198,13 @@
     // Delete Category
     async function deleteCategory() {
       const categoryId = document.getElementById("delete_category_id").value;
+      const csrfToken = getCookie('csrf_token');
 
       try {
         const response = await fetch(`${apiBaseUrl}/${categoryId}`, {
           method: "DELETE",
           headers: { "X-CSRF-Token": csrfToken },
+          credentials: "include"
         });
 
         const result = await response.json();
@@ -191,7 +215,8 @@
       }
     }
     fetch('http://127.0.0.1:8000/csrf_token', { method: 'GET', credentials: 'include' })
-            .catch(error => console.error('Error:', error));
+      .catch(error => console.error('Error:', error));
   </script>
 </body>
+
 </html>
