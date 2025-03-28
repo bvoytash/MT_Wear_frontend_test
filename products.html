@@ -108,6 +108,20 @@
       <p id="update-feedback"></p>
     </section>
 
+    <!-- Get Product by ID -->
+    <section id="get-product">
+      <h2>Get Product</h2>
+      <form id="getProductForm">
+        <div class="form-group">
+          <label for="get_product_id">Product ID:</label>
+          <input type="number" id="get_product_id" name="get_product_id" required placeholder="Enter product ID">
+        </div>
+        <button class="big-button" type="submit">Get Product</button>
+      </form>
+      
+      <!-- Product Details Display -->
+      <div id="product-details" class="product-info"></div>
+    </section>
 
     <!-- Delete Product -->
     <section id="delete-product">
@@ -185,57 +199,108 @@
       }
     }
 
-
-    // TODO: Finish the Update form
     // Update Product
-    const updateForm = document.getElementById("updateProductForm");
-    updateForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(updateForm);
-      console.log(formData.name);
-      
-      const productId = formData.get("update_id");
-      const csrfToken = getCookie('csrf_token');
+document.getElementById("updateProductForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-      try {
-        const response = await fetch(`${apiBaseUrl}/${productId}`, {
-          method: "PUT",
-          headers: {
-            "X-CSRF-Token": csrfToken
-          },
-          body: formData,
-          credentials: "include"
-        });
+  const csrfToken = getCookie("csrf_token");
+  const productId = document.getElementById("update_id").value;
+  const newName = document.getElementById("update_name").value;
+  const newDescription = document.getElementById("update_description").value;
+  const newPrice = document.getElementById("update_price").value;
+  const newCategory = document.getElementById("update_category").value;
+  const newImageUrl = document.getElementById("update_image_url").value;
+  const newSize = document.getElementById("update_size").value;
+  const isActive = document.getElementById("update_is_active").value;
 
-        const result = await response.json();
-        document.getElementById("update-feedback").innerText = result.detail || "Product updated successfully!";
-      } catch (error) {
-        console.error(error);
-        alert("Failed to update product");
-      }
-    })
+  if (!productId) {
+    alert("Product ID is required!");
+    return;
+  }
 
+  const formData = new FormData();
+  if (newName) formData.append("name", newName);
+  if (newDescription) formData.append("description", newDescription);
+  if (newPrice) formData.append("price", newPrice);
+  if (newCategory) formData.append("category", newCategory);
+  if (newImageUrl) formData.append("image_url", newImageUrl);
+  if (newSize) formData.append("size", newSize);
+  if (isActive) formData.append("is_active", isActive);
 
+  try {
+    const response = await fetch(`${apiBaseUrl}/${productId}`, {
+      method: "PUT",
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
+      credentials: "include",
+      body: formData,
+    });
 
-    // Delete Product
-    async function deleteProduct() {
-      const productId = document.getElementById("delete_id").value;
-      const csrfToken = getCookie('csrf_token');
+    const result = await response.json();
+    document.getElementById("update-feedback").innerText = result.detail || "Product updated successfully!";
+  } catch (error) {
+    console.error(error);
+    alert("Failed to update product");
+  }
+});
 
-      try {
-        const response = await fetch(`${apiBaseUrl}/${productId}`, {
-          method: "DELETE",
-          headers: { "X-CSRF-Token": csrfToken },
-          credentials: "include"
-        });
+// GET PRODUCT BY ID
+document.getElementById("getProductForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-        const result = await response.json();
-        document.getElementById("delete-feedback").innerText = result.detail || `Product with ID ${productId} deleted successfully!`;
-      } catch (error) {
-        console.error(error);
-        alert("Failed to delete product");
-      }
+  const productId = document.getElementById("get_product_id").value;
+  const csrfToken = getCookie("csrf_token");
+
+  if (!productId) {
+    alert("Please enter a product ID!");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/${productId}`, {
+      method: "GET",
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Product not found (ID: ${productId})`);
     }
+
+    const data = await response.json();
+    displayProductDetails(data.product);
+
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+});
+
+// Function to display product details
+function displayProductDetails(product) {
+  const productDetails = document.getElementById("product-details");
+
+  // Make sure to reference product.category here instead of an undefined variable 'category'
+  const category = product.category ? product.category : (product.category_id ? `Category ID: ${product.category_id}` : "Category not available");
+
+  productDetails.innerHTML = `
+    <h3>Product Details</h3>
+    <p><strong>ID:</strong> ${product.id}</p>
+    <p><strong>Name:</strong> ${product.name}</p>
+    <p><strong>Description:</strong> ${product.description || "N/A"}</p>
+    <p><strong>Price:</strong> $${product.price.toFixed(2)}</p>
+    <p><strong>Category:</strong> ${category}</p> <!-- Fixing the category reference -->
+    <p><strong>Size:</strong> ${product.size || "N/A"}</p>
+    <p><strong>Active:</strong> ${product.is_active ? "Yes" : "No"}</p>
+    <img src="${product.image_url}" alt="Product Image" width="150" onerror="this.style.display='none'">
+  `;
+}
+
+
+
     fetch('http://127.0.0.1:8000/csrf_token', { method: 'GET', credentials: 'include' })
       .catch(error => console.error('Error:', error));
 
