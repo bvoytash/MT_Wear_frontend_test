@@ -58,7 +58,7 @@
     <section id="get-products">
       <h2>Get All Products</h2>
       <button class="big-button" onclick="getAllProducts()">Fetch Products</button>
-      <pre id="products-list"></pre>
+      <div id="products-list"></div>
     </section>
 
     <!-- Update Product -->
@@ -179,24 +179,102 @@
 
     // Get All Products
     async function getAllProducts() {
-      const csrfToken = getCookie('csrf_token');
-      try {
-        const response = await fetch(`${apiBaseUrl}/all`, {
-          headers: { "X-CSRF-Token": csrfToken },
-          credentials: "include"
+    const csrfToken = getCookie('csrf_token');
+    try {
+      const response = await fetch(`${apiBaseUrl}/all`, {
+        headers: { "X-CSRF-Token": csrfToken },
+        credentials: "include"
+      });
+      const data = await response.json();
+      const productsList = document.getElementById("products-list");
+      productsList.innerHTML = ""; // Clear previous content
+
+      if (data.products) {
+        data.products.forEach(product => {
+          const productDiv = document.createElement("div");
+          productDiv.classList.add("product-item");
+
+          productDiv.innerHTML = `
+            <p><strong>${product.name}</strong></p>
+            <p>Price: $${product.price}</p>
+            <p>Category: ${product.category}</p>
+            <label for="size-${product.id}">Size:</label>
+            <input type="text" id="size-${product.id}" placeholder="Enter size">
+            <label for="quantity-${product.id}">Quantity:</label>
+            <input type="number" id="quantity-${product.id}" value="1" min="1">
+            <button onclick="addToBag(${product.id}, '${product.name}', ${product.price})">Add to Bag</button>
+          `;
+
+          productsList.appendChild(productDiv);
         });
-        const data = await response.json();
-        const productsList = document.getElementById("products-list");
-        if (data.products) {
-          productsList.innerText = JSON.stringify(data.products, null, 2);
-        } else {
-          productsList.innerText = data.detail;
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Failed to fetch products");
+      } else {
+        productsList.innerText = data.detail;
       }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch products");
     }
+  }
+
+  async function addToBag(productId, productName, price) {
+    const sizeInput = document.getElementById(`size-${productId}`);
+    const quantityInput = document.getElementById(`quantity-${productId}`);
+    const size = sizeInput ? sizeInput.value : null;
+    const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+
+    const formData = new FormData();
+    formData.append("product_id", productId);
+    formData.append("product_name", productName);
+    formData.append("quantity", quantity);
+    formData.append("price", price);
+    formData.append("size", size);
+
+    console.log("FormData being sent:", formData);
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/shopping_bag/add_item", {
+            method: "POST",
+            headers: {
+                "X-CSRF-Token": getCookie('csrf_token')
+            },
+            credentials: "include",
+            body: formData
+        });
+
+        const responseData = await response.json();
+        console.log("Response Status:", response.status);
+        console.log("Response Data:", responseData);
+
+        if (response.ok) {
+            alert("Item added to bag!");
+            console.log("Shopping Bag:", responseData.shopping_bag_items);
+        } else {
+            alert(`Failed to add item: ${responseData.detail || "Unknown error"}`);
+        }
+    } catch (error) {
+        console.error("Fetch error:", error);
+        alert("Error adding item to bag.");
+    }
+}
+    // async function getAllProducts() {
+    //   const csrfToken = getCookie('csrf_token');
+    //   try {
+    //     const response = await fetch(`${apiBaseUrl}/all`, {
+    //       headers: { "X-CSRF-Token": csrfToken },
+    //       credentials: "include"
+    //     });
+    //     const data = await response.json();
+    //     const productsList = document.getElementById("products-list");
+    //     if (data.products) {
+    //       productsList.innerText = JSON.stringify(data.products, null, 2);
+    //     } else {
+    //       productsList.innerText = data.detail;
+    //     }
+    //   } catch (error) {
+    //     console.error(error);
+    //     alert("Failed to fetch products");
+    //   }
+    // }
 
     // Update Product
 document.getElementById("updateProductForm").addEventListener("submit", async (e) => {
