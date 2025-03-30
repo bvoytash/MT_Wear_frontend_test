@@ -16,6 +16,9 @@
     <section id="shopping-bag">
       <h2>Your Shopping Bag</h2>
       <div id="shopping-bag-items"></div>
+
+      <!-- Checkout Button -->
+      <button id="checkout-btn">Proceed to Checkout</button>
     </section>
   </main>
 
@@ -121,6 +124,12 @@
     console.error("Error removing item:", error);
   }
 }
+
+// Checkout button logic (for now just a placeholder)
+document.getElementById('checkout-btn').addEventListener('click', async () => {
+  // Redirect to the order review page
+  window.location.href = '/order_review.html';  // Update the URL if needed
+});
   </script>
 
 </body>

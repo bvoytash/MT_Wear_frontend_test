@@ -64,3 +64,35 @@ body {
   .product-item input {
     margin-right: 10px;
   }
+
+  
+  /* Style the radio buttons */
+  input[type="radio"] {
+    width: 20px;  /* Reduce the size of the radio button */
+    height: 20px;
+    margin-right: 10px;  /* Add space between the radio button and the label */
+  }
+
+  label {
+    font-size: 16px;  /* Adjust the label size for readability */
+    margin-right: 20px;  /* Space between radio buttons */
+  }
+
+  .payment-methods {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+
+  .payment-methods h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  /* Make the payment section more visually appealing */
+  .payment-methods label {
+    display: inline-block;
+    margin-bottom: 10px;
+  }

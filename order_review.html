@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Review</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header>
+    <h1>Order Review</h1>
+  </header>
+
+  <main>
+    <section id="order-review">
+        <h2>Your Order</h2>
+        <div id="user-profile-info">
+          <h3>Shipping details:</h3>
+          <p><strong>Name:</strong> <span id="user-name"></span></p>
+          <p><strong>Address:</strong> <span id="user-address"></span></p>
+          <p><strong>City:</strong> <span id="user-city"></span></p> <!-- Add city here -->
+          <p><strong>Postal Code:</strong> <span id="user-postal-code"></span></p> <!-- Add postal code here -->
+          <p><strong>Phone Number:</strong> <span id="user-phone"></span></p>
+          <button id="update-profile">Edit Profile Data</button>
+        </div>
+
+      <div id="shopping-bag-items">
+        <h3>Your Shopping Bag</h3>
+        <!-- Items will be inserted here by JavaScript -->
+      </div>
+
+      <!-- Payment Methods Section -->
+      <div class="payment-methods">
+        <h3>Select Payment Method</h3>
+        <label for="payment-debit">
+          <input type="radio" id="payment-debit" name="payment-method" value="debit-card"> Debit Card
+        </label>
+        <label for="payment-cash">
+          <input type="radio" id="payment-cash" name="payment-method" value="cash"> Cash on Delivery
+        </label>
+      </div>
+
+      <button id="confirm-checkout-btn">Confirm Checkout</button>
+    </section>
+  </main>
+
+  <script>
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+          return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+      }
+      return null;
+    }
+
+    // Fetch the shopping bag items and user profile
+    async function fetchOrderReview() {
+  const csrfToken = getCookie('csrf_token');
+
+  try {
+    // Send GET request to the backend to fetch the order details (user profile + items)
+    const response = await fetch('http://127.0.0.1:8000/shopping_bag/checkout', {
+      method: 'GET',
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
+      credentials: 'include',  // Ensure cookies are included with the request
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch order details:', response.status);
+      return;
+    }
+
+    const data = await response.json();
+
+    // Fill in the user profile info
+    document.getElementById('user-name').textContent = data.user_profile.name;
+    document.getElementById('user-address').textContent = data.user_profile.address;
+    document.getElementById('user-city').textContent = data.user_profile.city;  // Add city
+    document.getElementById('user-postal-code').textContent = data.user_profile.postal_code;  // Add postal code
+    document.getElementById('user-phone').textContent = data.user_profile.phone_number;
+
+    // Display the shopping bag items
+    const itemsContainer = document.getElementById('shopping-bag-items');
+    itemsContainer.innerHTML = '';  // Clear the current list
+
+    let totalPrice = 0;  // Initialize total price here
+
+    if (data.items && data.items.length > 0) {
+      data.items.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.classList.add('product-item');
+        itemElement.innerHTML = `
+          <h4>${item.product_name}</h4>
+          <p><strong>Size:</strong> ${item.size || 'No size'}</p>
+          <p><strong>Price:</strong> $${item.price}</p>
+          <p><strong>Quantity:</strong> ${item.quantity}</p>
+          <p><strong>Total Price:</strong> $${item.price * item.quantity}</p>
+        `;
+        itemsContainer.appendChild(itemElement);
+
+        // Add item total price to the overall total
+        totalPrice += item.price * item.quantity;
+      });
+
+      // Display the total price
+      const totalElement = document.createElement('div');
+      totalElement.classList.add('total-price');
+      totalElement.innerHTML = `
+        <h3>Total Price: $${totalPrice}</h3>
+      `;
+      itemsContainer.appendChild(totalElement);
+
+    } else {
+      itemsContainer.innerHTML = '<p>Your shopping bag is empty.</p>';
+    }
+
+  } catch (error) {
+    console.error('Error fetching order review:', error);
+  }
+}
+
+// Fetch the order review data when the page loads
+fetchOrderReview();
+  </script>
+
+</body>
+</html>

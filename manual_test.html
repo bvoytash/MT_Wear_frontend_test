@@ -621,6 +621,7 @@
                 passwordResultDiv.style.visibility = 'visible';
             }
         });
+    
 
         fetch('http://127.0.0.1:8000/csrf_token', { method: 'GET', credentials: 'include' })
             .catch(error => console.error('Error:', error));
