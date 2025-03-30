@@ -20,14 +20,31 @@
   </main>
 
   <script>
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+          return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+      }
+      return null;
+    }
+
+
     // Fetch items from the shopping bag
     async function fetchShoppingBagItems() {
       console.log("Fetching shopping bag items...");
+      const csrfToken = getCookie('csrf_token');
 
       try {
         // Send GET request to backend
         const response = await fetch('http://127.0.0.1:8000/shopping_bag/items', {
           method: 'GET',
+          headers: {
+            "X-CSRF-Token": csrfToken
+          },
           credentials: 'include',  // Ensure cookies are sent with the request
         });
 
@@ -39,7 +56,6 @@
 
         // Parse the response JSON
         const data = await response.json();
-        console.log('Fetched shopping bag items:', data); // Debugging line
 
         const itemsContainer = document.getElementById('shopping-bag-items');
         itemsContainer.innerHTML = '';  // Clear the current list
@@ -55,7 +71,13 @@
               <p><strong>Price:</strong> $${item.price}</p>
               <p><strong>Quantity:</strong> ${item.quantity}</p>
               <p><strong>Total Price:</strong> $${item.price * item.quantity}</p>
+               <button class="remove-btn" data-id="${item.product_id}" data-size="${item.size}">Remove</button>
             `;
+            // Add event listener for the remove button
+        itemElement.querySelector(".remove-btn").addEventListener("click", () => {
+          removeItemFromBag(item.product_id, item.size);
+        });
+
             itemsContainer.appendChild(itemElement);
           });
         } else {
@@ -69,6 +91,36 @@
 
     // Call the function to fetch items when the page loads
     fetchShoppingBagItems();
+  
+
+  async function removeItemFromBag(productId, size) {
+    const csrfToken = getCookie('csrf_token');
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/shopping_bag/items/remove", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        size: size,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to remove item:", response.status);
+      return;
+    }
+
+    // Refresh the shopping bag list
+    fetchShoppingBagItems();
+  } catch (error) {
+    console.error("Error removing item:", error);
+  }
+}
   </script>
 
 </body>
