@@ -126,8 +126,43 @@
   }
 }
 
-// Fetch the order review data when the page loads
-fetchOrderReview();
+// Function to handle order creation
+async function createOrder() {
+      const csrfToken = getCookie('csrf_token');
+      const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
+      console.log(paymentMethod);
+      
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/orders/create', {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          credentials: 'include',
+          body: JSON.stringify({ payment_method: paymentMethod })
+        });
+
+        console.log(response)
+        if (!response.ok) {
+          console.error('Failed to create order:', response.status);
+          return;
+        }
+
+        // Redirect to orders.html after successful order creation
+        window.location.href = 'orders.html';
+
+      } catch (error) {
+        console.error('Error creating order:', error);
+      }
+    }
+
+    // Event listener for confirm checkout button
+    document.getElementById('confirm-checkout-btn').addEventListener('click', createOrder);
+
+    // Fetch the order review data when the page loads
+    fetchOrderReview();
   </script>
 
 </body>
