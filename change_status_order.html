@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Order Status</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Update Order Status</h1>
+  </header>
+
+  <main>
+    <section id="update-order-section">
+      <h2>Select Order to Update</h2>
+      
+      <form id="update-order-form">
+        <label for="order-id">Enter Order ID:</label>
+        <input type="number" id="order-id" name="order-id" required>
+        
+        <label for="status">Select New Status:</label>
+        <select id="status" name="status" required>
+          <option value="PREPARING">PREPARING</option>
+          <option value="ACCEPTED">ACCEPTED</option>
+          <option value="SENT">SENT</option>
+          <option value="CANCELED">CANCELED</option>
+          <option value="REJECTED">REJECTED</option>
+        </select>
+
+        <button type="submit">Update Status</button>
+      </form>
+
+      <div id="response-message"></div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('update-order-form');
+    const responseMessage = document.getElementById('response-message');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent the form from refreshing the page
+
+      const orderId = document.getElementById('order-id').value;
+      const status = document.getElementById('status').value.toLowerCase(); 
+
+      if (!orderId || !status) {
+        responseMessage.innerHTML = '<p>Please fill in all fields.</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/orders/update_status/${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: status }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          responseMessage.innerHTML = `<p>Error: ${errorData.detail || 'Unknown error.'}</p>`;
+          return;
+        }
+
+        const data = await response.json();
+        responseMessage.innerHTML = `<p>Order ${data.order.order_id} updated to status: ${data.order.new_status}.</p>`;
+      } catch (error) {
+        console.error('Error updating order status:', error);
+        responseMessage.innerHTML = '<p>Error updating the order status.</p>';
+      }
+    });
+  </script>
+</body>
+</html>
